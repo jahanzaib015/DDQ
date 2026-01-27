@@ -1,0 +1,15 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+output*/
+*.xlsx
+*.pdf
+*.csv
+*.json
+*.db
+*.sqlite3
+.DS_Store
+Thumbs.db
