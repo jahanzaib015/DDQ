@@ -13,20 +13,7 @@
           <h1>DDQ Validator</h1>
           <p class="muted">Upload a filled DDQ Excel or PDF file and validate it.</p>
         </div>
-        <div class="status-pill" id="apiStatus">API not set</div>
       </header>
-
-      <section class="card">
-        <h2>API Settings</h2>
-        <div class="grid">
-          <label>
-            API Base URL
-            <input id="apiBase" type="text" placeholder="https://your-backend.onrender.com" />
-            <span class="hint">You can also set <code>?api=</code> in the URL.</span>
-          </label>
-          <button class="secondary" id="saveApiBase">Save API URL</button>
-        </div>
-      </section>
 
       <section class="card">
         <h2>Validation</h2>
@@ -34,18 +21,6 @@
           <label>
             Filled DDQ file (XLSX or PDF)
             <input id="fileInput" type="file" accept=".xlsx,.pdf" required />
-          </label>
-          <label class="toggle">
-            <input id="useLlm" type="checkbox" />
-            Use LLM refinement (requires OPENAI_API_KEY on backend)
-          </label>
-          <label>
-            LLM model
-            <input id="llmModel" type="text" value="gpt-5.2" />
-          </label>
-          <label>
-            Max rows per sheet (0 = no limit)
-            <input id="maxRows" type="number" min="0" value="0" />
           </label>
           <button id="submitBtn" type="submit">Validate</button>
         </form>

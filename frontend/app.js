@@ -1,6 +1,3 @@
-const apiBaseInput = document.getElementById("apiBase");
-const saveApiBaseBtn = document.getElementById("saveApiBase");
-const apiStatus = document.getElementById("apiStatus");
 const uploadForm = document.getElementById("uploadForm");
 const messageEl = document.getElementById("message");
 const resultsSection = document.getElementById("resultsSection");
@@ -12,26 +9,6 @@ const downloadJsonBtn = document.getElementById("downloadJson");
 let lastCsv = "";
 let lastSummaryJson = "";
 
-function getApiBaseFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const api = params.get("api");
-  return api ? api.replace(/\/$/, "") : "";
-}
-
-function getStoredApiBase() {
-  return localStorage.getItem("ddq_api_base") || "";
-}
-
-function setApiStatus(base) {
-  if (!base) {
-    apiStatus.textContent = "API not set";
-    apiStatus.classList.remove("ok");
-    return;
-  }
-  apiStatus.textContent = base;
-  apiStatus.classList.add("ok");
-}
-
 function setMessage(text, type = "info") {
   messageEl.textContent = text;
   messageEl.className = `message ${type}`;
@@ -41,24 +18,6 @@ function clearMessage() {
   messageEl.textContent = "";
   messageEl.className = "message hidden";
 }
-
-function hydrateApiBase() {
-  const fromUrl = getApiBaseFromUrl();
-  const stored = getStoredApiBase();
-  const origin = window.location.origin && window.location.origin !== "null"
-    ? window.location.origin
-    : "";
-  const base = fromUrl || stored || origin;
-  apiBaseInput.value = base;
-  setApiStatus(base);
-}
-
-saveApiBaseBtn.addEventListener("click", () => {
-  const base = apiBaseInput.value.trim().replace(/\/$/, "");
-  localStorage.setItem("ddq_api_base", base);
-  setApiStatus(base);
-  setMessage("API Base URL saved.", "success");
-});
 
 downloadCsvBtn.addEventListener("click", () => {
   if (!lastCsv) return;
@@ -141,17 +100,8 @@ uploadForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearMessage();
 
-  const apiBase = apiBaseInput.value.trim().replace(/\/$/, "");
-  const resolvedApiBase = apiBase || (window.location.origin !== "null" ? window.location.origin : "");
-  if (!resolvedApiBase) {
-    setMessage("Please set the API Base URL first.", "error");
-    return;
-  }
-
   const fileInput = document.getElementById("fileInput");
-  const useLlm = document.getElementById("useLlm").checked;
-  const llmModel = document.getElementById("llmModel").value.trim() || "gpt-5.2";
-  const maxRows = document.getElementById("maxRows").value;
+  const resolvedApiBase = window.location.origin !== "null" ? window.location.origin : "";
 
   if (!fileInput.files.length) {
     setMessage("Please select a file.", "error");
@@ -160,9 +110,7 @@ uploadForm.addEventListener("submit", async (event) => {
 
   const formData = new FormData();
   formData.append("file", fileInput.files[0]);
-  formData.append("use_llm", String(useLlm));
-  formData.append("llm_model", llmModel);
-  formData.append("max_rows_per_sheet", String(maxRows || 0));
+  formData.append("use_llm", "true");
 
   setMessage("Validating... this may take a moment.", "info");
 
@@ -188,5 +136,3 @@ uploadForm.addEventListener("submit", async (event) => {
     setMessage(error.message || "Something went wrong.", "error");
   }
 });
-
-hydrateApiBase();
