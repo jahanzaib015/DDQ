@@ -29,6 +29,8 @@ def llm_refine_findings(findings: List[Finding], model: str = "gpt-5.2", max_ite
     client = OpenAI()
 
     for f in findings[:max_items]:
+        if f.status == "NEEDS_EVIDENCE" or (f.details or {}).get("reference_detected"):
+            continue
         prompt = {
             "question": f.question_text,
             "customer_answer": f.answer_text,
