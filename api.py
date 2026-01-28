@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from ddq_validator.extract import load_questions, load_questions_pdf
 from ddq_validator.llm import llm_refine_findings
 from ddq_validator.models import Finding
+from ddq_validator.redact import redact_rows
 from ddq_validator.report import write_report
 from ddq_validator.rules import RuleConfig, should_validate, validate_row
 
@@ -122,6 +123,7 @@ async def validate(
                 filled_path=str(filled_path),
                 max_rows_per_sheet=max_rows,
             )
+        rows = redact_rows(rows)
 
         if not rows:
             raise HTTPException(
