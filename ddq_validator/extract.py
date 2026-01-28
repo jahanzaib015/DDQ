@@ -52,6 +52,7 @@ def load_questions(
             qid = norm_str(ws_fill.cell(r, colmap.qid_col).value)
             qtext = norm_str(ws_fill.cell(r, colmap.qtext_col).value)
             answer = norm_str(ws_fill.cell(r, colmap.answer_col).value)
+            expected = norm_str(ws_fill.cell(r, colmap.expected_col).value)
 
             # Skip completely empty rows
             if not qtext and not qid and not answer:
@@ -64,7 +65,7 @@ def load_questions(
                     question_id=qid or None,
                     question_text=qtext,
                     answer_text=answer,
-                    expected_text="",
+                    expected_text=expected,
                 )
             )
 

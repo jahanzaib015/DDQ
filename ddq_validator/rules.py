@@ -111,6 +111,21 @@ def is_innenrevision_sheet(sheet: str) -> bool:
     return "innenrevision" in s
 
 
+def is_regta_sheet(sheet: str) -> bool:
+    s = (sheet or "").lower()
+    return "regta" in s
+
+
+def is_zv_fobu_sheet(sheet: str) -> bool:
+    s = (sheet or "").lower()
+    return "zv" in s and "fobu" in s
+
+
+def is_verwahrstelle_sheet(sheet: str) -> bool:
+    s = (sheet or "").lower()
+    return "verwahrstelle" in s
+
+
 def expected_requires_filename(expected: str) -> bool:
     e = (expected or "").lower()
     return any(k in e for k in ["name of a file", "name of file", "dateiname"])
@@ -128,12 +143,20 @@ def expected_content_not_relevant(expected: str) -> bool:
 
 def expected_disallow_reference(expected: str) -> bool:
     e = (expected or "").lower()
-    return "reference to a document is not acceptable" in e
+    return (
+        "reference to a document is not acceptable" in e
+        or "reference to another document is not acceptable" in e
+        or "only reference to another document is also not acceptable" in e
+    )
 
 
 def expected_disallow_refusal(expected: str) -> bool:
     e = (expected or "").lower()
-    return "refusal is not acceptable" in e or "not acceptable" in e and "n/a" in e
+    return (
+        "refusal is not acceptable" in e
+        or "any sort of refusal is not acceptable" in e
+        or ("not acceptable" in e and "n/a" in e)
+    )
 
 
 def looks_like_email(answer: str) -> bool:
@@ -371,6 +394,87 @@ def validate_row(row: QuestionRow, cfg: RuleConfig) -> Optional[Finding]:
                 )
 
         # Disallow refusal-style answers where the template says refusal is not acceptable.
+        if expected_disallow_refusal(expected) and REFUSAL_PAT.search(answer):
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="REJECTED",
+                reason="Refusal-style answers are not acceptable for this question.",
+                details={"refusal": True},
+            )
+
+    if is_regta_sheet(row.sheet):
+        if expected_disallow_reference(expected) and detect_reference(answer):
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="REJECTED",
+                reason="Reference-only answers are not acceptable; provide substantive text.",
+                details={"reference_only": True},
+            )
+
+        if expected_disallow_refusal(expected) and REFUSAL_PAT.search(answer):
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="REJECTED",
+                reason="Refusal-style answers are not acceptable for this question.",
+                details={"refusal": True},
+            )
+
+    if is_zv_fobu_sheet(row.sheet):
+        if expected_disallow_reference(expected) and detect_reference(answer):
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="REJECTED",
+                reason="Reference-only answers are not acceptable; provide substantive text.",
+                details={"reference_only": True},
+            )
+
+        if expected_disallow_refusal(expected) and REFUSAL_PAT.search(answer):
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="REJECTED",
+                reason="Refusal-style answers are not acceptable for this question.",
+                details={"refusal": True},
+            )
+
+    if is_verwahrstelle_sheet(row.sheet):
+        if expected_disallow_reference(expected) and detect_reference(answer):
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="REJECTED",
+                reason="Reference-only answers are not acceptable; provide substantive text.",
+                details={"reference_only": True},
+            )
+
         if expected_disallow_refusal(expected) and REFUSAL_PAT.search(answer):
             return Finding(
                 sheet=row.sheet,
