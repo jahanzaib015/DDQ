@@ -14,6 +14,11 @@ PHONE_PAT = re.compile(r"[0-9].*[0-9].*[0-9].*[0-9].*[0-9].*[0-9].*[0-9]")
 URL_PAT = re.compile(r"(https?://|www\.)\S+", re.I)
 FILENAME_PAT = re.compile(r"\b[\w\-.]+\.(pdf|docx|doc|xlsx|xls|pptx|ppt|zip|png|jpg|jpeg|csv)\b", re.I)
 REFUSAL_PAT = re.compile(r"\b(refusal|refuse|decline|not to answer|no answer)\b", re.I)
+SIGNATURE_PAT = re.compile(
+    r"(signature|signatur|unterschrift|name\s*&\s*position|name\s*and\s*position|"
+    r"ort\s*/\s*datum|place\s*/\s*date)",
+    re.I,
+)
 REFERENCE_PAT = re.compile(
     r"(see|refer|reference|attached|attachment|annex|section|chapter|appendix|"
     r"siehe|vgl\.|verweis|anhang|beigefügt|abschnitt|kapitel|ziffer)"
@@ -85,6 +90,12 @@ def looks_like_note(expected: str, question_text: str) -> bool:
     return False
 
 
+def is_signature_row(row: QuestionRow) -> bool:
+    q = (row.question_text or "").lower()
+    e = (row.expected_text or "").lower()
+    return bool(SIGNATURE_PAT.search(q) or SIGNATURE_PAT.search(e))
+
+
 def is_allgemeiner_sheet(sheet: str) -> bool:
     s = (sheet or "").lower()
     return "allgemein" in s or "general" in s
@@ -154,6 +165,9 @@ def should_validate(row: QuestionRow) -> bool:
     if looks_like_note(expected, row.question_text):
         return False
 
+    if is_signature_row(row):
+        return True
+
     # Validate if it looks like an actual question
     if looks_like_question(row.question_text):
         return True
@@ -218,6 +232,22 @@ def validate_row(row: QuestionRow, cfg: RuleConfig) -> Optional[Finding]:
     answer = (row.answer_text or "").strip()
     expected = (row.expected_text or "").strip()
     mandatory = is_mandatory(row)
+
+    if is_signature_row(row):
+        forbidden = contains_forbidden(answer, cfg)
+        if not answer or forbidden:
+            return Finding(
+                sheet=row.sheet,
+                row_idx=row.row_idx,
+                question_id=row.question_id,
+                question_text=row.question_text,
+                answer_text=row.answer_text,
+                expected_text=row.expected_text,
+                status="INCOMPLETE",
+                reason="Signature/name/date is missing.",
+                details={"expected": "signature"},
+            )
+        return None
 
     if not answer:
         if mandatory:

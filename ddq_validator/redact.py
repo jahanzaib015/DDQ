@@ -16,6 +16,10 @@ _TITLE_RE = re.compile(
 _BY_FROM_RE = re.compile(
     r"(?i)\b(by|from|attn|attention)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})"
 )
+_GENERAL_NAME_RE = re.compile(
+    r"\b([A-ZÄÖÜ][a-zäöü]+(?:[-'][A-ZÄÖÜa-zäöü]+)*)"
+    r"(?:\s+([A-ZÄÖÜ][a-zäöü]+(?:[-'][A-ZÄÖÜa-zäöü]+)*)){1,3}\b"
+)
 
 
 def redact_names(text: str) -> str:
@@ -25,6 +29,7 @@ def redact_names(text: str) -> str:
     text = _NAME_LABEL_RE.sub(lambda m: f"{m.group(1)}: [REDACTED]", text)
     text = _TITLE_RE.sub(lambda m: f"{m.group(1)} [REDACTED]", text)
     text = _BY_FROM_RE.sub(lambda m: f"{m.group(1)} [REDACTED]", text)
+    text = _GENERAL_NAME_RE.sub("[REDACTED]", text)
     return text
 
 
