@@ -72,12 +72,45 @@ def load_questions(
     return rows
 
 
+def _needs_ocr(text: str) -> bool:
+    if not text:
+        return True
+    alnum = sum(1 for ch in text if ch.isalnum())
+    return alnum < 30
+
+
+def _ocr_pdf_text(path: str) -> str:
+    try:
+        from pdf2image import convert_from_path
+        import pytesseract
+    except Exception:
+        return ""
+
+    try:
+        images = convert_from_path(path, dpi=300)
+    except Exception:
+        return ""
+
+    parts: List[str] = []
+    for img in images:
+        try:
+            parts.append(pytesseract.image_to_string(img))
+        except Exception:
+            continue
+    return "\n".join(parts).strip()
+
+
 def _pdf_text(path: str) -> str:
     doc = fitz.open(path)
     parts: List[str] = []
     for page in doc:
         parts.append(page.get_text("text"))
-    return "\n".join(parts)
+    text = "\n".join(parts).strip()
+    if _needs_ocr(text):
+        ocr_text = _ocr_pdf_text(path)
+        if ocr_text:
+            return ocr_text
+    return text
 
 
 def _split_qid_chunks(text: str) -> List[tuple[str, str]]:

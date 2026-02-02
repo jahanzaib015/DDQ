@@ -45,6 +45,22 @@ Outputs:
 - `output/report.csv`
 - `output/summary.json`
 
+## PDFs that open in Adobe but fail
+
+Some PDFs are scanned/flattened or XFA forms without a text layer. For those, the validator cannot extract any text.
+
+Options:
+- Export to a text-based PDF (e.g., Acrobat "Recognize Text"/OCR).
+- Export to XLSX and upload that.
+- Enable OCR extraction (optional):
+
+```bash
+pip install pdf2image pytesseract pillow
+```
+
+You will also need system tools:
+- Windows: install Tesseract OCR and Poppler, then add them to PATH.
+
 ## Optional: enable LLM checks
 
 Set your API key:

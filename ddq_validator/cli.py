@@ -46,6 +46,12 @@ def validate(
         )
     rows = redact_rows(rows)
     if not rows:
+        if filled_path.suffix.lower() == ".pdf":
+            raise RuntimeError(
+                "No text could be extracted from the PDF. This usually means the PDF "
+                "is scanned/flattened or an Adobe form without a text layer. "
+                "Try OCR or export to a text-based PDF, then re-upload."
+            )
         raise RuntimeError(
             "No rows were extracted. Check that the filled file uses the expected "
             "column layout (A=ID, B=Question, C=Answer)."
