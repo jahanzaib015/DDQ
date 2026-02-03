@@ -6,6 +6,7 @@ from typing import List, Optional
 import openpyxl
 import fitz
 import re
+import importlib
 
 from .models import QuestionRow
 
@@ -81,13 +82,13 @@ def _needs_ocr(text: str) -> bool:
 
 def _ocr_pdf_text(path: str) -> str:
     try:
-        from pdf2image import convert_from_path
-        import pytesseract
+        pdf2image = importlib.import_module("pdf2image")
+        pytesseract = importlib.import_module("pytesseract")
     except Exception:
         return ""
 
     try:
-        images = convert_from_path(path, dpi=300)
+        images = pdf2image.convert_from_path(path, dpi=300)
     except Exception:
         return ""
 
