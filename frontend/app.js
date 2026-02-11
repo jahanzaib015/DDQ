@@ -118,11 +118,28 @@ uploadForm.addEventListener("submit", async (event) => {
     const response = await fetch(`${resolvedApiBase}/validate`, {
       method: "POST",
       body: formData,
+      headers: {
+        Accept: "application/json",
+      },
     });
 
+    const contentType = response.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
+
     if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      throw new Error(payload.detail || "Validation failed.");
+      let message = "Validation failed.";
+      if (response.status === 403) {
+        message =
+          "Access denied (403 Forbidden). On VDI/corporate networks this is often the proxy or firewall blocking the request. Ask IT to allow POST to this app’s /validate endpoint, or try from a non-corporate network.";
+      } else if (isJson) {
+        const payload = await response.json().catch(() => ({}));
+        const detail = Array.isArray(payload.detail) ? payload.detail.map((d) => d.msg || d).join("; ") : payload.detail;
+        if (detail) message = detail;
+      } else {
+        const text = await response.text();
+        message = `Validation failed (${response.status} ${response.statusText}). ${text ? "Response may be from a proxy or firewall." : ""}`.trim();
+      }
+      throw new Error(message);
     }
 
     const data = await response.json();
@@ -133,6 +150,11 @@ uploadForm.addEventListener("submit", async (event) => {
     resultsSection.classList.remove("hidden");
     setMessage("Validation complete.", "success");
   } catch (error) {
-    setMessage(error.message || "Something went wrong.", "error");
+    const msg = error.message || "Something went wrong.";
+    const isNetwork = msg === "Failed to fetch" || error.name === "TypeError";
+    const hint = isNetwork
+      ? " (Network error — on VDI/corporate networks, check proxy, firewall, or try again.)"
+      : "";
+    setMessage(msg + hint, "error");
   }
 });

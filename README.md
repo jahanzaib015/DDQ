@@ -61,6 +61,16 @@ pip install pdf2image pytesseract pillow
 You will also need system tools:
 - Windows: install Tesseract OCR and Poppler, then add them to PATH.
 
+## Web app on VDI / corporate networks
+
+If the deployed app works on your PC but shows "Validation failed" immediately on a VDI (e.g. Omnissa) or behind a corporate proxy:
+
+- **Proxy / SSL inspection** – Traffic may be intercepted; the browser can get an HTML error page instead of the API response, so the app shows a generic failure. After the latest update, the UI shows the real HTTP status and a hint when a network error occurs.
+- **Timeouts** – Proxies or firewalls may close long-running requests (e.g. large PDFs or LLM validation). Try a smaller file or XLSX instead of PDF.
+- **Upload size limits** – Some gateways cap request body size; try a smaller file.
+- **403 Forbidden** – The request reaches the host but is rejected (e.g. by a corporate proxy or WAF). The app will show a message suggesting you ask IT to allow POST requests to the app’s `/validate` endpoint, or try from a non-corporate network.
+- **What to check** – Use the browser’s Network tab (F12 → Network) when you click Validate: look at the `/validate` request’s status (e.g. 403, 502, 504) and response body. That will show whether the failure is at the network/proxy or inside the app.
+
 ## Optional: enable LLM checks
 
 Set your API key:

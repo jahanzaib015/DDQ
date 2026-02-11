@@ -108,43 +108,52 @@ async def validate(
 
     max_rows: Optional[int] = None if max_rows_per_sheet <= 0 else max_rows_per_sheet
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-        filled_path = tmp_path / f"filled{suffix}"
-        filled_path.write_bytes(await file.read())
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            filled_path = tmp_path / f"filled{suffix}"
+            file_bytes = await file.read()
+            filled_path.write_bytes(file_bytes)
 
-        if suffix == ".pdf":
-            rows = load_questions_pdf(
-                filled_path=str(filled_path),
-                max_rows_per_sheet=max_rows,
-            )
-        else:
-            rows = load_questions(
-                filled_path=str(filled_path),
-                max_rows_per_sheet=max_rows,
-            )
-        rows = redact_rows(rows)
+            if suffix == ".pdf":
+                rows = load_questions_pdf(
+                    filled_path=str(filled_path),
+                    max_rows_per_sheet=max_rows,
+                )
+            else:
+                rows = load_questions(
+                    filled_path=str(filled_path),
+                    max_rows_per_sheet=max_rows,
+                )
+            rows = redact_rows(rows)
 
-        if not rows:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "No rows were extracted. Check that the filled file uses the expected "
-                    "column layout (A=ID, B=Question, C=Answer)."
-                ),
-            )
+            if not rows:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "No rows were extracted. Check that the filled file uses the expected "
+                        "column layout (A=ID, B=Question, C=Answer)."
+                    ),
+                )
 
-        results = _validate_rows(rows, use_llm=use_llm, llm_model=llm_model)
-        report_result = write_report(results, tmp_path)
-        report_csv = Path(report_result["report_csv"]).read_text(encoding="utf-8")
-        summary_json = Path(report_result["summary_json"]).read_text(encoding="utf-8")
+            results = _validate_rows(rows, use_llm=use_llm, llm_model=llm_model)
+            report_result = write_report(results, tmp_path)
+            report_csv = Path(report_result["report_csv"]).read_text(encoding="utf-8")
+            summary_json = Path(report_result["summary_json"]).read_text(encoding="utf-8")
 
-        return {
-            "summary": report_result["summary"],
-            "report": [r.to_dict() for r in results],
-            "report_csv": report_csv,
-            "summary_json": summary_json,
-        }
+            return {
+                "summary": report_result["summary"],
+                "report": [r.to_dict() for r in results],
+                "report_csv": report_csv,
+                "summary_json": summary_json,
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Validation error: {type(e).__name__}: {str(e)}",
+        )
 
 
 @app.get("/")
