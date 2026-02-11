@@ -1,9 +1,10 @@
+import logging
 import os
 import tempfile
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -92,13 +93,29 @@ def _validate_rows(rows, use_llm: bool, llm_model: str) -> List[Finding]:
     return results
 
 
+_log = logging.getLogger(__name__)
+
+
 @app.post("/validate")
 async def validate(
+    request: Request,
     file: UploadFile = File(...),
     use_llm: bool = Form(False),
     llm_model: str = Form("gpt-5.2"),
     max_rows_per_sheet: int = Form(0),
 ):
+    origin = request.headers.get("origin", "")
+    referer = request.headers.get("referer", "")
+    user_agent = (request.headers.get("user-agent") or "")[:120]
+    forwarded = request.headers.get("x-forwarded-for") or request.headers.get("x-real-ip") or ""
+    _log.info(
+        "validate request: origin=%s referer=%s user_agent=%s forwarded=%s",
+        origin,
+        referer,
+        user_agent,
+        forwarded,
+    )
+
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded.")
 

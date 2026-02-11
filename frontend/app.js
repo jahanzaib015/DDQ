@@ -114,14 +114,26 @@ uploadForm.addEventListener("submit", async (event) => {
 
   setMessage("Validating... this may take a moment.", "info");
 
-  try {
-    const response = await fetch(`${resolvedApiBase}/validate`, {
+  const validateHeaders = {
+    Accept: "application/json",
+    "Accept-Language": "en-US,en;q=0.9",
+  };
+
+  const doValidate = () =>
+    fetch(`${resolvedApiBase}/validate`, {
       method: "POST",
       body: formData,
-      headers: {
-        Accept: "application/json",
-      },
+      headers: validateHeaders,
     });
+
+  try {
+    let response = await doValidate();
+
+    if (response.status === 403) {
+      setMessage("First attempt blocked (403). Retrying once…", "info");
+      await new Promise((r) => setTimeout(r, 1500));
+      response = await doValidate();
+    }
 
     const contentType = response.headers.get("content-type") || "";
     const isJson = contentType.includes("application/json");
@@ -130,7 +142,7 @@ uploadForm.addEventListener("submit", async (event) => {
       let message = "Validation failed.";
       if (response.status === 403) {
         message =
-          "Access denied (403 Forbidden). On VDI/corporate networks this is often the proxy or firewall blocking the request. Ask IT to allow POST to this app’s /validate endpoint, or try from a non-corporate network.";
+          "Access denied (403). Usually a corporate proxy or WAF blocking the request (shared IP, SSL inspection, or security policy). Ask IT to whitelist this app’s URL and allow POST to /validate, or try from a non-corporate network.";
       } else if (isJson) {
         const payload = await response.json().catch(() => ({}));
         const detail = Array.isArray(payload.detail) ? payload.detail.map((d) => d.msg || d).join("; ") : payload.detail;
