@@ -135,22 +135,11 @@ uploadForm.addEventListener("submit", async (event) => {
       response = await doValidate();
     }
 
-    const contentType = response.headers.get("content-type") || "";
-    const isJson = contentType.includes("application/json");
-
     if (!response.ok) {
-      let message = "Validation failed.";
-      if (response.status === 403) {
-        message =
-          "Access denied (403). Usually a corporate proxy or WAF blocking the request (shared IP, SSL inspection, or security policy). Ask IT to whitelist this app’s URL and allow POST to /validate, or try from a non-corporate network.";
-      } else if (isJson) {
-        const payload = await response.json().catch(() => ({}));
-        const detail = Array.isArray(payload.detail) ? payload.detail.map((d) => d.msg || d).join("; ") : payload.detail;
-        if (detail) message = detail;
-      } else {
-        const text = await response.text();
-        message = `Validation failed (${response.status} ${response.statusText}). ${text ? "Response may be from a proxy or firewall." : ""}`.trim();
-      }
+      const text = await response.text();
+      const message = text.trim()
+        ? `${response.status} ${response.statusText}: ${text.trim()}`
+        : `Validation failed (${response.status} ${response.statusText}).`;
       throw new Error(message);
     }
 
