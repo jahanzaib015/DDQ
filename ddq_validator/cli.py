@@ -7,7 +7,7 @@ import typer
 from dotenv import load_dotenv
 from rich import print
 
-from .extract import load_questions, load_questions_pdf
+from .extract import consolidate_rows_by_qid, load_questions, load_questions_pdf
 from .models import Finding
 from .redact import redact_findings
 from .rules import RuleConfig, should_validate, validate_row
@@ -44,6 +44,7 @@ def validate(
             filled_path=str(filled_path),
             max_rows_per_sheet=max_rows,
         )
+    rows = consolidate_rows_by_qid(rows)
     if not rows:
         if filled_path.suffix.lower() == ".pdf":
             raise RuntimeError(

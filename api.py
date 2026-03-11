@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-from ddq_validator.extract import load_questions, load_questions_pdf
+from ddq_validator.extract import consolidate_rows_by_qid, load_questions, load_questions_pdf
 from ddq_validator.llm import llm_refine_findings
 from ddq_validator.models import Finding
 from ddq_validator.redact import redact_findings
@@ -142,6 +142,7 @@ async def validate(
                     filled_path=str(filled_path),
                     max_rows_per_sheet=max_rows,
                 )
+            rows = consolidate_rows_by_qid(rows)
 
             if not rows:
                 raise HTTPException(
