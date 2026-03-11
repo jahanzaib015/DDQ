@@ -15,7 +15,7 @@ from ddq_validator.llm import llm_refine_findings
 from ddq_validator.models import Finding
 from ddq_validator.redact import redact_findings
 from ddq_validator.report import write_report
-from ddq_validator.rules import RuleConfig, should_validate, validate_row
+from ddq_validator.rules import RuleConfig, is_ambiguous_fragment, should_validate, validate_row
 
 
 load_dotenv()
@@ -48,6 +48,8 @@ def _validate_rows(rows, use_llm: bool, llm_model: str) -> List[Finding]:
 
     for row in rows:
         if not should_validate(row):
+            if is_ambiguous_fragment(row):
+                continue
             results.append(
                 Finding(
                     sheet=row.sheet,

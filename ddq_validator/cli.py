@@ -10,7 +10,7 @@ from rich import print
 from .extract import consolidate_rows_by_qid, load_questions, load_questions_pdf
 from .models import Finding
 from .redact import redact_findings
-from .rules import RuleConfig, should_validate, validate_row
+from .rules import RuleConfig, is_ambiguous_fragment, should_validate, validate_row
 from .llm import llm_refine_findings
 from .report import write_report
 
@@ -63,6 +63,8 @@ def validate(
     results = []
     for row in rows:
         if not should_validate(row):
+            if is_ambiguous_fragment(row):
+                continue
             results.append(
                 Finding(
                     sheet=row.sheet,

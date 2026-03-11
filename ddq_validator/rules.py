@@ -67,6 +67,32 @@ def looks_like_question(text: str) -> bool:
     return False
 
 
+def is_ambiguous_fragment(row: QuestionRow) -> bool:
+    """Detect PDF extraction artifacts: document structure, date ranges, ToC—exclude from results."""
+    q = (row.question_text or "").strip().lower()
+    a = (row.answer_text or "").strip().lower()
+    if not q and not a:
+        return True
+    # Date-range fragments: "den Zeitraum vom" / "bis zum" / "vom" ... "bis"
+    date_fragments = ("den zeitraum vom", "bis zum", "vom ", "zeitraum vom")
+    if any(f in a for f in date_fragments) and len(a) < 25:
+        return True
+    if any(f in q for f in date_fragments) and len(q) < 40:
+        return True
+    # ToC / document structure: "Kapitel", "Abschnitt", section refs
+    toc_answers = ("kapitel", "abschnitt", "chapter", "section")
+    if a in toc_answers or (len(a) < 15 and any(t in a for t in toc_answers)):
+        return True
+    # Document/report fragments: "des ISAE 3402 Bericht...", "Bericht über die Verfahren"
+    report_fragments = ("des isae 3402", "bericht über die verfahren", "bericht über die kontrolle")
+    if any(f in q for f in report_fragments) and not looks_like_question(row.question_text):
+        return True
+    # Structural refs: "Verwahrstelle", Abschnitt "..." — quote-heavy ToC style
+    if q.count('"') >= 2 and any(k in q for k in ("abschnitt", "kapitel", "section", "verwahrstelle")):
+        return True
+    return False
+
+
 def looks_like_note(expected: str, question_text: str) -> bool:
     """Heuristic to ignore guidance lines that are not meant to be answered."""
 
