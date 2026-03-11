@@ -9,7 +9,7 @@ from rich import print
 
 from .extract import load_questions, load_questions_pdf
 from .models import Finding
-from .redact import redact_rows
+from .redact import redact_findings
 from .rules import RuleConfig, should_validate, validate_row
 from .llm import llm_refine_findings
 from .report import write_report
@@ -44,7 +44,6 @@ def validate(
             filled_path=str(filled_path),
             max_rows_per_sheet=max_rows,
         )
-    rows = redact_rows(rows)
     if not rows:
         if filled_path.suffix.lower() == ".pdf":
             raise RuntimeError(
@@ -106,6 +105,7 @@ def validate(
             for r in results
         ]
 
+    results = redact_findings(results)
     result = write_report(results, out_dir)
 
     print("\n[bold]DDQ Validation Complete[/bold]")

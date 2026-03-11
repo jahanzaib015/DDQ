@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List
 
-from .models import QuestionRow
+from .models import QuestionRow, Finding
 
 
 _NAME_LABEL_RE = re.compile(
@@ -44,6 +44,26 @@ def redact_rows(rows: Iterable[QuestionRow]) -> List[QuestionRow]:
                 question_text=redact_names(row.question_text),
                 answer_text=redact_names(row.answer_text),
                 expected_text=redact_names(row.expected_text),
+            )
+        )
+    return redacted
+
+
+def redact_findings(findings: Iterable[Finding]) -> List[Finding]:
+    """Redact PII in findings for safe display/export. Use after validation."""
+    redacted: List[Finding] = []
+    for f in findings:
+        redacted.append(
+            Finding(
+                sheet=f.sheet,
+                row_idx=f.row_idx,
+                question_id=f.question_id,
+                question_text=redact_names(f.question_text),
+                answer_text=redact_names(f.answer_text),
+                expected_text=redact_names(f.expected_text),
+                status=f.status,
+                reason=f.reason,
+                details=f.details,
             )
         )
     return redacted
